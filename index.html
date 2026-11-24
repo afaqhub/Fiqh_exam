@@ -120,6 +120,15 @@ td.sc{font-weight:700;color:var(--blue)}
 .btn.danger:hover,.btn.danger.arm{background:var(--red);color:#fff}
 .note{font-size:.85rem;opacity:.7;margin-top:12px}
 #dot{position:fixed;bottom:6px;left:6px;width:26px;height:26px;border-radius:50%;border:0;background:#B7842F;opacity:.07;padding:0}
+.num-in{width:120px!important;text-align:center;font-weight:700}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.snd{background:transparent;border:1.5px solid var(--gold2);color:#FBE9BE;border-radius:999px;padding:6px 16px;font-size:.95rem;white-space:nowrap;transition:.2s}
+.snd:hover{background:var(--gold2);color:#14344E}
+.btn.fin{border-color:var(--red);color:var(--red)}
+.btn.fin:hover,.btn.fin.arm{background:var(--red);color:#fff}
+tr.clk{cursor:pointer}tr.clk:hover td{background:#EAF2F8!important}
+.ans.skip{background:#EEE9DA;color:#5d5640}
+.err.big{font-size:1rem}
 .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,30px);background:#10283C;color:#fff;padding:9px 22px;border-radius:999px;opacity:0;transition:.3s;z-index:60;pointer-events:none;font-size:1rem}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .fade{animation:f .35s ease}
@@ -131,12 +140,12 @@ td.sc{font-weight:700;color:var(--blue)}
 <body>
 <header class="top"><div class="bar">
   <div class="brand"><h1>اختبر نفسك في الفقه والسلوك</h1><p>أسئلة مراجعة بخيارات متعددة، وتصحيح فوري مع بيان الأخطاء</p></div>
-  
+  <button class="snd" id="snd" type="button">الصوت: يعمل</button>
 </div></header>
 <div class="wrap"><main id="app"></main></div>
 
-<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="lt"><div class="modal">
-  <div class="mh"><h3 id="lt">سجل المجيبين ودرجاتهم</h3><button class="x" id="closeLog" type="button" aria-label="إغلاق">×</button></div>
+<div class="ov" id="ov"><div class="modal">
+  <div class="mh"><h3>لوحة المشرف: إدارة السجل</h3><button class="x" id="closeLog" type="button" aria-label="إغلاق">×</button></div>
   <div class="mb">
     <div class="tools">
       <label>ترتيب العرض والتصدير<select id="sortSel">
@@ -146,17 +155,21 @@ td.sc{font-weight:700;color:var(--blue)}
       <label>تصفية بالباب<select id="topicSel"></select></label>
     </div>
     <details class="add" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:700;color:var(--blue)">إضافة مشارك يدويًا</summary>
-<div class="tools" style="margin-top:10px"><label>الاسم<input type="text" id="an" maxlength="40"></label><label>الباب<select id="ac"></select></label>
-<label>الصحيحة<input type="text" id="ar1" inputmode="numeric" style="max-width:90px"></label><label>من<input type="text" id="ar2" inputmode="numeric" value="10" style="max-width:90px"></label>
-<button class="btn pri" id="aadd" type="button">إضافة</button></div></details>
-<div class="tw"><table><thead><tr><th>#</th><th>الاسم</th><th>الباب</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th><th></th></tr></thead><tbody id="logBody"></tbody></table></div>
+    <div class="tools" style="margin-top:10px"><label>الاسم<input type="text" id="an" maxlength="40"></label><label>الباب<select id="ac"></select></label>
+    <label>الصحيحة<input type="text" id="ar1" inputmode="numeric" style="max-width:90px"></label><label>من<input type="text" id="ar2" inputmode="numeric" value="10" style="max-width:90px"></label>
+    <button class="btn pri" id="aadd" type="button">إضافة</button></div></details>
+    <div class="tw"><table><thead><tr><th>#</th><th>الاسم</th><th>الباب</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th><th></th></tr></thead><tbody id="logBody"></tbody></table></div>
     <div class="foot">
       <button class="btn pri" id="exp" type="button">تصدير إلى ملف CSV</button>
       <button class="btn danger" id="clr" type="button">مسح السجل</button>
       <span id="cnt" class="hint"></span>
     </div>
-    <div class="note">يُحفظ السجل في هذا المتصفح على هذا الجهاز فقط. يفتح ملف CSV في إكسل، ويحترم الترتيب والتصفية المختارين أعلاه.</div>
+    <div class="note">يُحفظ السجل في هذا المتصفح على هذا الجهاز فقط. يحترم التصدير الترتيب والتصفية المختارين أعلاه.</div>
   </div>
+</div></div>
+<div class="ov" id="dv"><div class="modal">
+  <div class="mh"><h3 id="dvt">إجابات المختبر</h3><button class="x" id="dvx" type="button" aria-label="إغلاق">×</button></div>
+  <div class="mb" id="dvb"></div>
 </div></div>
 <button id="dot" type="button" aria-label=" " tabindex="-1"></button>
 <div class="ov" id="pw"><div class="modal" style="max-width:380px;margin-top:12vh"><div class="mh"><h3>دخول المشرف</h3><button class="x" id="pwx" type="button">×</button></div>
@@ -168,59 +181,121 @@ td.sc{font-weight:700;color:var(--blue)}
 "use strict";
 const CATS=[{"id": "siyam", "name": "الصيام"}, {"id": "hajj", "name": "الحج والعمرة"}, {"id": "jihad", "name": "الجهاد"}, {"id": "ghazw", "name": "الغزوات"}, {"id": "usra", "name": "فقه الأسرة"}, {"id": "muamalat", "name": "المعاملات"}, {"id": "atima", "name": "الأطعمة والصيد والمسكرات"}, {"id": "jarima", "name": "الجريمة والعقوبة"}];
 const DATA=[{"id": 1, "q": "متى يبدأ الإمساك للصائم؟", "a": "من طلوع الفجر الصادق", "b": "من ظهور الفجر الكاذب", "c": "من إقامة صلاة الفجر", "cat": "siyam", "ref": "الفقه – المتوسط – ص 7"}, {"id": 2, "q": "ما حكم المريض الذي يرجى برؤه إذا أفطر في رمضان؟", "a": "يقضي الأيام التي أفطرها بعد شفائه", "b": "يطعم عن كل يوم مسكينًا ولا يقضي", "c": "يلزمه الصيام ولو تضرر به", "cat": "siyam", "ref": "الفقه – المتوسط – ص 14"}, {"id": 3, "q": "ما حكم عقد النكاح للمُحْرِم؟", "a": "مُحَرَّم ولا يصح", "b": "جائز ولا شيء عليه", "c": "جائز بشرط الفدية", "cat": "hajj", "ref": "الفقه – المتوسط – ص 48"}, {"id": 4, "q": "ما حكم الحج على المستطيع؟", "a": "واجب مرة في العمر", "b": "واجب في كل عام", "c": "واجب مرتين في العمر", "cat": "hajj", "ref": "الفقه – المتوسط – ص 36"}, {"id": 5, "q": "ما ميقات أهل المدينة المنورة؟", "a": "ذو الحليفة", "b": "الجحفة", "c": "قرن المنازل", "cat": "hajj", "ref": "الفقه – المتوسط – ص 40"}, {"id": 6, "q": "ما اسم الطواف الذي يشرع للحاج عند مغادرته مكة؟", "a": "طواف الوداع", "b": "طواف الإفاضة", "c": "طواف القدوم", "cat": "hajj", "ref": "الفقه – المتوسط – ص 61"}, {"id": 7, "q": "من الذي يرجع إليه أمر الجهاد والدعوة إليه؟", "a": "ولي الأمر", "b": "العلماء وطلبة العلم", "c": "قادة الوحدات في الميدان", "cat": "jihad", "ref": "الفقه – المتوسط – ص 74"}, {"id": 8, "q": "ما الموقف الصحيح للمسلم عند الاستعداد للقتال؟", "a": "الإخلاص لله والتوكل عليه مع الأخذ بالأسباب", "b": "التوكل على الله وترك الإعداد", "c": "الاعتماد على القوة والعدد", "cat": "jihad", "ref": "الفقه – المتوسط – ص 84"}, {"id": 9, "q": "ما الغُلُول؟", "a": "الأخذ من الغنيمة قبل قسمتها", "b": "أخذ الجندي نصيبه من الغنيمة بعد قسمتها", "c": "تقسيم الغنيمة بين الجنود بالتساوي", "cat": "jihad", "ref": "الفقه – المتوسط – ص 98"}, {"id": 10, "q": "متى وقعت غزوة بدر؟", "a": "في رمضان من السنة الثانية للهجرة", "b": "في شوال من السنة الثالثة للهجرة", "c": "في رمضان من السنة الثالثة للهجرة", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 117"}, {"id": 11, "q": "ما الحكم المستفاد من دعاء النبي ﷺ ربه قبل المعركة في بدر؟", "a": "مشروعية الدعاء في المعارك مع الأخذ بالأسباب", "b": "أن النصر يتحقق بالدعاء دون إعداد", "c": "أن الدعاء خاص بالقائد دون الجنود", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 122"}, {"id": 12, "q": "متى كان فتح مكة؟", "a": "في رمضان من السنة الثامنة للهجرة", "b": "في رمضان من السنة السادسة للهجرة", "c": "في رمضان من السنة التاسعة للهجرة", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 138"}, {"id": 13, "q": "ما الذي اتخذه المسلمون لحماية المدينة في غزوة الأحزاب؟", "a": "حفر خندق حول المدينة", "b": "التحصن بالجبال المحيطة", "c": "الخروج لملاقاة الأحزاب خارج المدينة", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 131"}, {"id": 14, "q": "ما عدد الشهود المشترط في عقد النكاح؟", "a": "اثنان", "b": "ثلاثة", "c": "أربعة", "cat": "usra", "ref": "الفقه – النهائي – ص 15"}, {"id": 15, "q": "ما معنى العفة؟", "a": "الكف عما لا يحل", "b": "ترك المباحات والزهد فيها", "c": "الابتعاد عن الناس وعزلتهم", "cat": "usra", "ref": "الفقه – النهائي – ص 7"}, {"id": 16, "q": "ما تعريف الطلاق شرعًا؟", "a": "حل قيد النكاح أو بعضه", "b": "فسخ العقد بسبب عيب", "c": "هجر الزوجة وترك معاشرتها", "cat": "usra", "ref": "الفقه – النهائي – ص 27"}, {"id": 17, "q": "أي مما يلي ليس من أركان العقد؟", "a": "الشهود", "b": "العاقدان", "c": "الصيغة", "cat": "muamalat", "ref": "الفقه – النهائي – ص 43"}, {"id": 18, "q": "ما حكم كتمان البائع عيب سلعته عن المشتري؟", "a": "محرم", "b": "جائز إذا كان العيب يسيرًا", "c": "جائز إذا لم يسأل المشتري عنه", "cat": "muamalat", "ref": "الفقه – النهائي – ص 64"}, {"id": 19, "q": "ماذا أرشد النبي ﷺ من لم يستطع الزواج؟", "a": "أن يصوم", "b": "أن يتصدق", "c": "أن يسافر", "cat": "usra", "ref": "الفقه – النهائي – ص 8"}, {"id": 20, "q": "ما الأصل في النباتات؟", "a": "الإباحة إلا ما كان فيه ضرر على البدن أو العقل", "b": "التحريم إلا ما ثبت نفعه للبدن والعقل", "c": "التوقف عن أكلها إلى أن يتبين نفعها للبدن", "cat": "atima", "ref": "الفقه – النهائي – ص 72"}, {"id": 21, "q": "أي مما يلي من شروط حل الذبيحة؟", "a": "أن يذكر الذابح اسم الله عليها", "b": "أن يكون الذابح رجلًا", "c": "أن تذبح في وقت النهار", "cat": "atima", "ref": "الفقه – النهائي – ص 75"}, {"id": 22, "q": "ما الذي يشمله تحريم الخمر؟", "a": "كل ما يزيل العقل ويغطيه", "b": "ما صنع من العنب خاصة", "c": "ما كان له رائحة نفاذة ولو لم يسكر", "cat": "atima", "ref": "الفقه – النهائي – ص 89"}, {"id": 23, "q": "ما الحدود في الشريعة؟", "a": "عقوبات قدرها الله تعالى للجرائم", "b": "عقوبات يقدرها القاضي بحسب كل حالة", "c": "عقوبات يقدرها ولي الأمر", "cat": "jarima", "ref": "الفقه – النهائي – ص 98"}, {"id": 24, "q": "ما حكم الصيد في الأصل؟", "a": "مباح", "b": "مستحب", "c": "مكروه", "cat": "atima", "ref": "الفقه – النهائي – ص 82"}, {"id": 25, "q": "ما التعزير؟", "a": "عقوبة غير مقدرة يقدرها القاضي", "b": "عقوبة مقدرة بنص شرعي لا تتغير", "c": "عقوبة خاصة بجرائم القتل", "cat": "jarima", "ref": "الفقه – النهائي – ص 106"}, {"id": 26, "q": "أي مما يلي من محظورات الإحرام على الرجل؟", "a": "لبس المخيط", "b": "الاغتسال", "c": "الاستظلال بالخيمة", "cat": "hajj", "ref": "الفقه – المتوسط – ص 47"}, {"id": 27, "q": "ما حكم الفطر للمسافر في رمضان؟", "a": "يباح له الفطر ثم يقضي عدة الأيام بعد رمضان", "b": "يباح له الفطر ويطعم عن كل يوم مسكينًا", "c": "يجب عليه الفطر ويقضي الأيام بعد رمضان", "cat": "siyam", "ref": "الفقه – المتوسط – ص 14"}, {"id": 28, "q": "ما حكم من جامع زوجته في نهار رمضان وهو صائم؟", "a": "فسد صيامه وعليه القضاء مع الكفارة", "b": "فسد صيامه وعليه القضاء دون كفارة", "c": "صيامه صحيح وعليه الكفارة", "cat": "siyam", "ref": "الفقه – المتوسط – ص 18"}, {"id": 29, "q": "ما العمل الذي يؤديه المعتمر بعد الطواف؟", "a": "السعي بين الصفا والمروة", "b": "الوقوف بعرفة والمبيت بمزدلفة", "c": "رمي الجمرات في أيام التشريق", "cat": "hajj", "ref": "الفقه – المتوسط – ص 42"}, {"id": 30, "q": "ما الفرق بين ركن الحج وواجبه؟", "a": "من ترك الركن لم يصح حجه، ومن ترك الواجب جبره بدم", "b": "من ترك الركن جبره بدم، ومن ترك الواجب لم يصح حجه", "c": "من ترك أيًّا منهما بطل حجه وعليه إعادته", "cat": "hajj", "ref": "الفقه – المتوسط – ص 45"}, {"id": 31, "q": "ما حكم الهدي على المتمتع والقارن من غير أهل مكة؟", "a": "واجب مع القدرة عليه", "b": "سنة لا يلزم فعلها", "c": "لا يشرع في حقه", "cat": "hajj", "ref": "الفقه – المتوسط – ص 51"}, {"id": 32, "q": "ما حكم الجهاد على العسكري إذا أمر به ولي الأمر؟", "a": "فرض عين عليه", "b": "فرض كفاية يسقط بقيام غيره", "c": "مستحب وليس واجبًا", "cat": "jihad", "ref": "الفقه – المتوسط – ص 71"}, {"id": 33, "q": "من هو المقاتل في سبيل الله؟", "a": "من قاتل لإعلاء كلمة الله", "b": "من قاتل رياءً ليقال شجاع", "c": "من قاتل حمية لقومه", "cat": "jihad", "ref": "الفقه – المتوسط – ص 84"}, {"id": 34, "q": "متى تكون الوصية واجبة على المسلم؟", "a": "إذا كان في ذمته دين أو عنده أمانة لغيره", "b": "إذا كان له أولاد صغار", "c": "إذا أراد السفر لمدة طويلة", "cat": "jihad", "ref": "الفقه – المتوسط – ص 92"}, {"id": 35, "q": "كم كان عدد المسلمين تقريبًا في غزوة بدر؟", "a": "نحو ثلاث مئة", "b": "نحو سبع مئة", "c": "نحو ثلاثة آلاف", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 117"}, {"id": 36, "q": "من المقاصد الشرعية للغزوات النبوية:", "a": "حماية المستضعفين وأمن المدينة النبوية", "b": "التسلط على الناس واستعبادهم", "c": "إزهاق النفوس وسفك الدماء", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 114"}, {"id": 37, "q": "ما موقف النبي ﷺ من أهل مكة عند فتحها؟", "a": "عفا عنهم وأمنهم", "b": "أمر بقتل أهل مكة", "c": "فرض عليهم الجزية مقابل الأمان", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 139"}, {"id": 38, "q": "ضد من كانت غزوة تبوك؟", "a": "الروم", "b": "الفرس", "c": "قريش", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 147"}, {"id": 39, "q": "أي مما يلي ليس من شروط صحة النكاح؟", "a": "دفع المهر كاملًا قبل العقد", "b": "رضا الزوجين بالعقد", "c": "وجود الولي للمرأة", "cat": "usra", "ref": "الفقه – النهائي – ص 14"}, {"id": 40, "q": "ما حكم تسمية المهر في العقد؟", "a": "سنة ولا يبطل العقد بتركها", "b": "شرط لا يصح العقد بدونه", "c": "ركن من أركان العقد", "cat": "usra", "ref": "الفقه – النهائي – ص 21"}, {"id": 41, "q": "متى يباح الطلاق دون كراهة؟", "a": "إذا كان لحاجة كسوء خلق المرأة", "b": "إذا طلبه أحد أقارب الزوج", "c": "إذا غضب الزوج غضبًا شديدًا", "cat": "usra", "ref": "الفقه – النهائي – ص 27"}, {"id": 42, "q": "ما المقصود بكون العقد مفيدًا؟", "a": "أن يحقق مصلحة معقولة للمتعاقدين", "b": "أن يحقق ربحًا كبيرًا لأحد الطرفين", "c": "أن يكون مكتوبًا وموثقا بين الطرفين", "cat": "muamalat", "ref": "الفقه – النهائي – ص 44"}, {"id": 43, "q": "ما الأصل في العقود بعد انعقادها؟", "a": "اللزوم فيجب على المتعاقدين الوفاء بها", "b": "الجواز فلكل طرف فسخها متى شاء", "c": "الجواز في العقود المالية واللزوم في غيرها", "cat": "muamalat", "ref": "الفقه – النهائي – ص 45"}, {"id": 44, "q": "أي مما يلي من عقود الأمانات؟", "a": "الوديعة", "b": "البيع", "c": "الإجارة", "cat": "muamalat", "ref": "الفقه – النهائي – ص 41"}, {"id": 45, "q": "متى تحرم الأطعمة الضارة؟", "a": "إذا كان أكلها أو شربها يضر بالبدن", "b": "إذا كان طعمها غير مألوف عند الناس", "c": "إذا غلا ثمنها ولم يقدر عليها أغلب الناس", "cat": "atima", "ref": "الفقه – النهائي – ص 74"}, {"id": 46, "q": "ما مقدار ما يأكله المضطر من المحرم في المجاعة الخاصة؟", "a": "ما يسد الرمق ويدفع الجوع الشديد", "b": "ما يشبعه", "c": "ما يكفيه ليومه وليلته", "cat": "atima", "ref": "الفقه – النهائي – ص 81"}, {"id": 47, "q": "ما حكم شرب القليل من الخمر الذي لا يسكر؟", "a": "محرم", "b": "مباح ما لم يصل إلى حد السكر", "c": "مكروه ولا يحرم", "cat": "atima", "ref": "الفقه – النهائي – ص 89"}, {"id": 48, "q": "ما الذي تتحقق به السرقة الموجبة للحد؟", "a": "أخذ المال من حرزه خفية بقدر النصاب", "b": "أخذ المال علنًا بالقوة والتهديد", "c": "أخذ المال بالخديعة والتحايل", "cat": "jarima", "ref": "الفقه – النهائي – ص 99"}, {"id": 49, "q": "أي أنواع القتل يوجب القصاص؟", "a": "القتل العمد", "b": "القتل شبه العمد", "c": "القتل الخطأ", "cat": "jarima", "ref": "الفقه – النهائي – ص 105"}, {"id": 50, "q": "ما الذي لا تكون العقوبة إلا بناء عليه؟", "a": "نص شرعي أو نص نظامي", "b": "عرف القبيلة وعادات المجتمع", "c": "رأي أغلب الناس في المجتمع", "cat": "jarima", "ref": "الفقه – النهائي – ص 108"}, {"id": 51, "q": "متى ينوي المسلم صيام الفرض؟", "a": "في أي وقت من الليل", "b": "بعد صلاة الظهر من اليوم نفسه", "c": "عند أول النهار بعد طلوع الفجر", "cat": "siyam", "ref": "الفقه – المتوسط – ص 9"}, {"id": 52, "q": "ما حكم الصيام للمرأة الحائض في رمضان؟", "a": "يحرم عليها الصيام ويلزمها قضاء الأيام", "b": "يحرم عليها الصيام ولا قضاء عليها", "c": "يجوز لها الصيام إن قدرت عليه", "cat": "siyam", "ref": "الفقه – المتوسط – ص 15"}, {"id": 53, "q": "ما فضل صيام يوم عرفة؟", "a": "يكفر ذنوب السنة التي قبله والتي بعده", "b": "يكفر ذنوب السنة التي قبله فقط", "c": "يكفر ذنوب السنة التي بعده فقط", "cat": "siyam", "ref": "الفقه – المتوسط – ص 22"}, {"id": 54, "q": "أي مما يلي من أركان الحج؟", "a": "الوقوف بعرفة", "b": "المبيت بمزدلفة", "c": "رمي الجمرات", "cat": "hajj", "ref": "الفقه – المتوسط – ص 42"}, {"id": 55, "q": "أين يبيت الحاج ليلة العاشر من ذي الحجة؟", "a": "في مزدلفة", "b": "في منى", "c": "في عرفة", "cat": "hajj", "ref": "الفقه – المتوسط – ص 58"}, {"id": 56, "q": "ما النسك الذي يحرم فيه الحاج بالحج وحده؟", "a": "الإفراد", "b": "التمتع", "c": "القران", "cat": "hajj", "ref": "الفقه – المتوسط – ص 54"}, {"id": 57, "q": "أي مما يلي من الجهاد في الإسلام؟", "a": "جهاد النفس", "b": "ترك الأعمال الدنيوية للتفرغ للعبادة", "c": "الانعزال عن المجتمع وأهله", "cat": "jihad", "ref": "الفقه – المتوسط – ص 71"}, {"id": 58, "q": "من الذي يرجع إليه أمر عقوبة الغال من الغنيمة؟", "a": "الإمام أو من ينوب عنه", "b": "أفراد الوحدة التي ينتمي إليها", "c": "أهل الغنيمة جميعًا", "cat": "jihad", "ref": "الفقه – المتوسط – ص 99"}, {"id": 59, "q": "ما حكم تغسيل الشهيد الذي قتل في المعركة؟", "a": "لا يغسل، ويدفن في ثيابه التي قتل فيها", "b": "يغسل ويكفن كسائر الموتى من المسلمين", "c": "يغسل ثم يصلى عليه ولا يكفن بعد ذلك", "cat": "jihad", "ref": "الفقه – المتوسط – ص 102"}, {"id": 60, "q": "ما سبب خروج النبي ﷺ والمسلمين إلى بدر؟", "a": "اعتراض قافلة قريش القادمة من الشام", "b": "الرد على هجوم قريش على المدينة", "c": "نصرة خزاعة بعد نقض قريش للعهد", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 117"}, {"id": 61, "q": "كم كان عدد جيش المسلمين تقريبًا في فتح مكة؟", "a": "نحو عشرة آلاف", "b": "نحو ثلاثة آلاف", "c": "نحو اثني عشر ألفًا", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 138"}, {"id": 62, "q": "ما أعظم دروس غزوة حنين؟", "a": "التوكل على الله وعدم الاغترار بالكثرة", "b": "أن النصر يتحقق بكثرة عدد الجيش", "c": "أن النصر يتحقق بقوة السلاح والعتاد", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 146"}, {"id": 63, "q": "ما حكم النكاح لمن قدر عليه وخشي على نفسه الوقوع في الزنا؟", "a": "واجب", "b": "مستحب", "c": "مباح", "cat": "usra", "ref": "الفقه – النهائي – ص 10"}, {"id": 64, "q": "ما المقصود بنكاح الشغار؟", "a": "أن يزوج كل رجل موليته للآخر بلا مهر", "b": "أن يتزوج المرأة دون علم أهلها وبلا شهود", "c": "أن يتزوج المرأة لمدة محددة ثم يفارقها", "cat": "usra", "ref": "الفقه – النهائي – ص 16"}, {"id": 65, "q": "لمن يكون المهر؟", "a": "ملك خالص للمرأة تتصرف فيه", "b": "ملك لوليها يتصرف فيه عنها", "c": "ملك مشترك بينها وبين أسرتها", "cat": "usra", "ref": "الفقه – النهائي – ص 21"}, {"id": 66, "q": "ما الرجعة؟", "a": "إعادة المطلقة طلاقًا رجعيًا في عدتها بلا عقد جديد", "b": "عقد جديد بمهر جديد بعد انتهاء العدة", "c": "رد المهر إلى الزوج بعد وقوع الطلاق", "cat": "usra", "ref": "الفقه – النهائي – ص 31"}, {"id": 67, "q": "من أمثلة المعاملات التي يغلب فيها الجهالة والغرر:", "a": "بيع ما في بطون الأنعام", "b": "بيع الثمر بعد ظهور صلاحه", "c": "بيع السلعة المعلومة بثمن مؤجل", "cat": "muamalat", "ref": "الفقه – النهائي – ص 39"}, {"id": 68, "q": "ما حكم الربا؟", "a": "محرم دل على تحريمه الكتاب والسنة والإجماع", "b": "مكروه إذا كان يسيرًا", "c": "جائز إذا رضي به الطرفان دون إكراه", "cat": "muamalat", "ref": "الفقه – النهائي – ص 50"}, {"id": 69, "q": "ما النَّجْش في البيع؟", "a": "الزيادة في ثمن السلعة ممن لا يريد شراءها", "b": "بيع السلعة بأكثر من ثمنها لمن يجهل سعرها", "c": "بيع الرجل على بيع أخيه", "cat": "muamalat", "ref": "الفقه – النهائي – ص 47"}, {"id": 70, "q": "أي مما يلي يحرم أكله؟", "a": "كل ذي ناب من السباع", "b": "الأرانب", "c": "الحمار الوحشي", "cat": "atima", "ref": "الفقه – النهائي – ص 78"}, {"id": 71, "q": "متى يحرم الصيد على المسلم؟", "a": "إذا شغله عن الصلاة وغيرها من الواجبات", "b": "إذا كان بقصد الأكل من الصيد", "c": "إذا كان بالكلب المُعَلَّم", "cat": "atima", "ref": "الفقه – النهائي – ص 87"}, {"id": 72, "q": "ما أبرز خطر المخدرات على متعاطيها؟", "a": "سيطرتها عليه وانهياره نفسيًا وبدنيا", "b": "استنزاف ماله وإنفاقه بسرعة", "c": "إصابته بالأمراض بين حين وآخر", "cat": "atima", "ref": "الفقه – النهائي – ص 90"}, {"id": 73, "q": "أي مما يلي من شروط حل الصيد بالكلب المُعَلَّم؟", "a": "أن يرسله صاحبه ويذكر اسم الله عند الإرسال", "b": "أن يأكل منه الكلب قبل صاحبه", "c": "أن يذهب إليه من تلقاء نفسه دون إرسال", "cat": "atima", "ref": "الفقه – النهائي – ص 84"}, {"id": 74, "q": "ما معنى القصاص؟", "a": "معاقبة الجاني بمثل ما فعل بالمجني عليه", "b": "دفع مال للمجني عليه بدل الجناية", "c": "حبس الجاني مدة يقدرها القاضي", "cat": "jarima", "ref": "الفقه – النهائي – ص 105"}, {"id": 75, "q": "كيف يهدد تعاطي المخدرات أمن المنظومة العسكرية؟", "a": "يغيب عقل المتعاطي فربما سرب معلومات سرية أو ارتكب جريمة", "b": "يقلل عدد الأفراد المؤهلين للالتحاق بالقطاعات العسكرية", "c": "يتسبب في تعطل الأجهزة والمعدات العسكرية", "cat": "jarima", "ref": "الفقه – النهائي – ص 117"}, {"id": 76, "q": "ما حكم السحور للصائم؟", "a": "سنة يستحب تأخيره ما لم يخش طلوع الفجر", "b": "واجب لا يصح الصوم بدونه", "c": "سنة يستحب تقديمه إلى منتصف الليل", "cat": "siyam", "ref": "الفقه – المتوسط – ص 11"}, {"id": 77, "q": "ما حكم من أكل أو شرب ناسيًا وهو صائم؟", "a": "صيامه صحيح ويتم صومه", "b": "يفسد صومه ويقضي اليوم", "c": "يفسد صومه وتلزمه الكفارة", "cat": "siyam", "ref": "الفقه – المتوسط – ص 17"}, {"id": 78, "q": "ما حكم الصيام للعسكري الذي في ميدان القتال أو متوجه إليه؟", "a": "الفطر أولى له لأن فيه دفعًا للمشقة وقوة على القتال", "b": "الصوم أولى له", "c": "لا يجوز له الفطر في أي حال", "cat": "siyam", "ref": "الفقه – المتوسط – ص 28"}, {"id": 79, "q": "أين يبدأ السعي وأين ينتهي؟", "a": "يبدأ من الصفا وينتهي بالمروة", "b": "يبدأ من المروة وينتهي بالصفا", "c": "يبدأ من الحجر الأسود وينتهي بالمروة", "cat": "hajj", "ref": "الفقه – المتوسط – ص 56"}, {"id": 80, "q": "كم حصاة يرمي بها الحاج في كل جمرة؟", "a": "سبع حصيات", "b": "ثلاث حصيات", "c": "إحدى وعشرون حصاة", "cat": "hajj", "ref": "الفقه – المتوسط – ص 59"}, {"id": 81, "q": "ما حكم المسح على الخوذة التي يصعب نزعها عند الطهارة؟", "a": "يجوز المسح عليها", "b": "يجب نزعها ولو شق ذلك", "c": "يجب التيمم بدلًا من الوضوء", "cat": "jihad", "ref": "الفقه – المتوسط – ص 106"}, {"id": 82, "q": "ما المقصود بالرباط في سبيل الله؟", "a": "مرابطة الجنود وإقامتهم أمام العدو لحفظ حدود الوطن", "b": "الإقامة في مكة المكرمة للعبادة والذكر", "c": "الاعتكاف في المسجد في العشر الأواخر", "cat": "jihad", "ref": "الفقه – المتوسط – ص 90"}, {"id": 83, "q": "ما الغاية الأساسية من الجهاد في سبيل الله؟", "a": "إعلاء كلمة الله ودحر عدوان الأعداء وتأمين الوطن", "b": "جمع الغنائم والتوسع في أراضي الآخرين", "c": "إظهار القوة والهيبة أمام الأمم الأخرى", "cat": "jihad", "ref": "الفقه – المتوسط – ص 70"}, {"id": 84, "q": "ما الذي كفله الإسلام لأسير العدو؟", "a": "حسن المعاملة وتوفير الطعام والشراب والكساء", "b": "إعادته إلى بلده بعد انتهاء المعركة مباشرة", "c": "تخييره بين البقاء عند المسلمين والرحيل متى شاء", "cat": "jihad", "ref": "الفقه – المتوسط – ص 103"}, {"id": 85, "q": "ما المقصود بالغزوة؟", "a": "الجيش الذي يخرج فيه النبي ﷺ بنفسه لقتال العدو", "b": "الجيش الذي يرسله النبي ﷺ ولا يخرج فيه", "c": "كل قتال وقع في عهد النبي ﷺ ولو لم يخرج فيه", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 113"}, {"id": 86, "q": "ما سبب فتح مكة؟", "a": "نقض قريش لهدنة الحديبية وإعانتها حلفاءها ضد حلفاء المسلمين", "b": "منع قريش للمسلمين من أداء العمرة وصدهم", "c": "اعتداء قريش على المدينة وحصارها", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 138"}, {"id": 87, "q": "ما سبب انكسار المسلمين في غزوة أحد؟", "a": "مخالفة الرماة لأمر النبي ﷺ", "b": "قلة سلاح المسلمين وعتادهم", "c": "كثرة جيش قريش وعتاده", "cat": "ghazw", "ref": "الفقه – المتوسط – ص 126"}, {"id": 88, "q": "أي مما يلي من أركان عقد النكاح؟", "a": "الإيجاب والقبول بين الطرفين", "b": "تسمية المهر ودفعه عند العقد", "c": "إقامة الوليمة بعد العقد", "cat": "usra", "ref": "الفقه – النهائي – ص 12"}, {"id": 89, "q": "ما الخِطبة؟", "a": "طلب الزواج والوعد به", "b": "عقد الزواج", "c": "الاتفاق على المهر", "cat": "usra", "ref": "الفقه – النهائي – ص 19"}, {"id": 90, "q": "من حقوق الزوجة على زوجها:", "a": "النفقة والسكن بالمعروف", "b": "أن تتولى الإنفاق على الأسرة", "c": "أن يستأذنها في كل تصرف", "cat": "usra", "ref": "الفقه – النهائي – ص 25"}, {"id": 91, "q": "ما الأصل في المعاملات المالية؟", "a": "الإباحة إلا ما دل الدليل على تحريمه", "b": "التحريم إلا ما دل الدليل على إباحته", "c": "المنع إلا بإذن ولي الأمر", "cat": "muamalat", "ref": "الفقه – النهائي – ص 41"}, {"id": 92, "q": "ما حكم بيع العنب لمن يعلم أنه يصنع منه خمرًا؟", "a": "محرم", "b": "جائز", "c": "مكروه", "cat": "muamalat", "ref": "الفقه – النهائي – ص 48"}, {"id": 93, "q": "أي مما يلي من صور الربا؟", "a": "أن يقرضه مالًا بشرط أن يرده بزيادة", "b": "أن يقرضه مالًا ويرده بمثله", "c": "أن يمهله في السداد دون زيادة", "cat": "muamalat", "ref": "الفقه – النهائي – ص 52"}, {"id": 94, "q": "ما الأصل في الأطعمة والأشربة؟", "a": "الحل والإباحة إلا ما حرمه الله ورسوله", "b": "الحل في النباتات والتحريم في الحيوانات إلا بدليل", "c": "التوقف حتى يرد دليل بالحل أو التحريم", "cat": "atima", "ref": "الفقه – النهائي – ص 70"}, {"id": 95, "q": "ما حكم أكل ما ذبح تقربًا لغير الله كالأضرحة؟", "a": "محرم وهو في حكم الميتة", "b": "حلال إن ذكر عليه اسم الله", "c": "مكروه ولا يحرم أكله", "cat": "atima", "ref": "الفقه – النهائي – ص 76"}, {"id": 96, "q": "ما حكم صيام يومي عيد الفطر والأضحى؟", "a": "محرم", "b": "مكروه", "c": "مستحب لمن اعتاد الصيام", "cat": "siyam", "ref": "الفقه – المتوسط – ص 24"}, {"id": 97, "q": "أي مما يلي من سنن الحج؟", "a": "الاضطباع في طواف القدوم", "b": "الوقوف بعرفة", "c": "الإحرام من الميقات", "cat": "hajj", "ref": "الفقه – المتوسط – ص 46"}, {"id": 98, "q": "ما الحرابة؟", "a": "إخافة السبيل وقطع الطريق للقتل أو أخذ المال", "b": "الاعتداء على الناس بالضرب في أماكن عامة", "c": "قتل شخص بسبب عداوة شخصية بينهما", "cat": "jarima", "ref": "الفقه – النهائي – ص 99"}, {"id": 99, "q": "ما الجريمة في الاصطلاح الشرعي؟", "a": "محظورات شرعية زجر الله عنها بحد أو تعزير", "b": "كل فعل يخالف أعراف الناس وعاداتهم", "c": "كل معصية يعلم بها الناس", "cat": "jarima", "ref": "الفقه – النهائي – ص 96"}, {"id": 100, "q": "ما حكم الفوائد التي يدفعها حامل البطاقة للبنك مقابل التأخر في السداد؟", "a": "محرمة لأنها من الربا", "b": "جائزة لأنها رسوم خدمة", "c": "جائزة إذا كانت قليلة", "cat": "muamalat", "ref": "الفقه – النهائي – ص 54"}];
+const PH="19968a8e4db4bf9ce017433b2a2b32d7f97b73a704c341bcdc16f2c2ba22e987";
 const AR="٠١٢٣٤٥٦٧٨٩";
 const ar=n=>String(n).replace(/\d/g,d=>AR[d]);
+const toEn=s=>String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d));
 const LET=["أ","ب","ج"];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=id=>document.getElementById(id);
 const app=$("app");
-let S={name:"",cat:"all",count:10,qs:[],i:0,saved:false};
+let S={name:"",sel:new Set(CATS.map(c=>c.id)),cnt:"10",qs:[],i:0};
 let mem=[];
 const KEY="fiqh_quiz_results_v1";
-function loadLog(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):[]}catch(e){return mem}}
+function loadLog(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):mem}catch(e){return mem}}
 function saveLog(a){mem=a;try{localStorage.setItem(KEY,JSON.stringify(a))}catch(e){}}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),2600)}
-const catName=id=>id==="all"?"كل الأبواب":(CATS.find(c=>c.id===id)||{}).name||id;
-const poolFor=id=>id==="all"?DATA:DATA.filter(q=>q.cat===id);
+const catName=id=>(CATS.find(c=>c.id===id)||{}).name||id;
+const poolSize=()=>DATA.filter(q=>S.sel.has(q.cat)).length;
+const selLabel=()=>S.sel.size===CATS.length?"كل الأبواب":CATS.filter(c=>S.sel.has(c.id)).map(c=>c.name).join("، ");
+const isOk=q=>q.ch!==null&&q.opts[q.ch].ok;
 
+/* sound (synthesized, no music) */
+let AC=null,MUTE=false;
+try{MUTE=localStorage.getItem("fq_mute")==="1"}catch(e){}
+function tone(f,d,type,v,t0){if(MUTE)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(t0||0);o.type=type||"sine";o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v||.12,t+.01);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+const SND={
+ tap:()=>tone(520,.07,"sine",.09),
+ tog:()=>{tone(620,.06,"triangle",.1);tone(820,.08,"triangle",.1,.05)},
+ sel:()=>{tone(660,.07,"sine",.12);tone(990,.1,"sine",.1,.06)},
+ next:()=>{tone(440,.08,"triangle",.1);tone(587,.1,"triangle",.1,.07)},
+ start:()=>[523,659,784,1047].forEach((f,k)=>tone(f,.18,"triangle",.12,k*.08)),
+ err:()=>{tone(200,.16,"square",.06);tone(160,.2,"square",.05,.12)},
+ win:()=>[523,659,784,1047,1319].forEach((f,k)=>tone(f,.25,"triangle",.13,k*.1)),
+ ok:()=>[392,523,659].forEach((f,k)=>tone(f,.22,"triangle",.12,k*.12)),
+ low:()=>[392,330,262].forEach((f,k)=>tone(f,.3,"sine",.12,k*.16)),
+ open:()=>{tone(500,.1,"sine",.1);tone(750,.14,"sine",.1,.08)}
+};
+const snd=k=>{try{SND[k]()}catch(e){}};
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.id==="snd")return;
+  if(b.classList.contains("opt"))snd("sel");else if(b.classList.contains("topic")||b.classList.contains("chip"))snd("tog");
+  else if(b.classList.contains("go")||b.id==="nx"||b.id==="dot"||b.id==="pwok"||b.id==="again")return;else snd("tap")},true);
+function syncSnd(){$("snd").textContent=MUTE?"الصوت: متوقف":"الصوت: يعمل"}
+$("snd").onclick=()=>{MUTE=!MUTE;try{localStorage.setItem("fq_mute",MUTE?"1":"0")}catch(e){}syncSnd();if(!MUTE)snd("tog")};syncSnd();
+
+/* question picking: balanced across chosen categories */
+function pick(n){
+  const lists=CATS.filter(c=>S.sel.has(c.id)).map(c=>shuffle(DATA.filter(q=>q.cat===c.id)));
+  const out=[];
+  while(out.length<n){
+    let took=false;
+    for(const l of shuffle(lists)){if(out.length>=n)break;if(l.length){out.push(l.pop());took=true}}
+    if(!took)break;
+  }
+  return shuffle(out);
+}
+function build(n){
+  S.qs=pick(n).map(q=>({id:q.id,q:q.q,cat:q.cat,ref:q.ref,opts:shuffle([q.a,q.b,q.c].map((t,k)=>({t,ok:k===0}))),ch:null}));
+  S.i=0;
+}
+
+/* start screen */
 function renderStart(){
-  const total=DATA.length;
   app.innerHTML=`<div class="card fade">
     <h2 class="sec"><i>١</i>اسم المجيب</h2>
     <input type="text" id="nm" maxlength="40" placeholder="اكتب اسمك هنا" autocomplete="off" value="${esc(S.name)}">
     <div class="err" id="e1"></div>
-    <h2 class="sec" style="margin-top:14px"><i>٢</i>اختر الباب</h2>
+    <h2 class="sec" style="margin-top:14px"><i>٢</i>اختر الأبواب <span class="hint" style="font-weight:400">(يمكن اختيار أكثر من باب)</span></h2>
     <div class="topics" id="tp">
-      <button type="button" class="topic all" data-c="all" aria-pressed="${S.cat==="all"}"><b>كل الأبواب</b><span>${ar(total)} سؤالًا مختلطة من جميع الأبواب</span></button>
-      ${CATS.map(c=>`<button type="button" class="topic" data-c="${c.id}" aria-pressed="${S.cat===c.id}"><b>${esc(c.name)}</b><span>${ar(poolFor(c.id).length)} سؤالًا</span></button>`).join("")}
+      <button type="button" class="topic all" data-c="all"><b>كل الأبواب</b><span>${ar(DATA.length)} سؤالًا مختلطة من جميع الأبواب</span></button>
+      ${CATS.map(c=>`<button type="button" class="topic" data-c="${c.id}"><b>${esc(c.name)}</b><span>${ar(DATA.filter(q=>q.cat===c.id).length)} سؤالًا</span></button>`).join("")}
     </div>
-    <h2 class="sec" style="margin-top:20px"><i>٣</i>عدد الأسئلة</h2>
-    <div class="chips" id="ch"></div>
-    <div class="hint">تُخلط الأسئلة والخيارات في كل مرة، فلا يتكرر ترتيبها.</div>
+    <div class="err" id="e2"></div>
+    <h2 class="sec" style="margin-top:14px"><i>٣</i>عدد الأسئلة</h2>
+    <div class="row"><input type="text" class="num-in" id="cn" inputmode="numeric" maxlength="3" value="${esc(S.cnt)}" aria-label="عدد الأسئلة">
+      <div class="chips" id="ch"></div></div>
+    <div class="err big" id="e3"></div>
     <button class="go" id="go" type="button">ابدأ الاختبار</button>
-  </div>`;
-  const drawChips=()=>{const n=poolFor(S.cat).length;
-    const opts=[10,20,30].filter(x=>x<n);opts.push(n);
-    if(S.count>n||!opts.includes(S.count))S.count=opts.includes(10)?10:n;
-    $("ch").innerHTML=opts.map(x=>`<button type="button" class="chip" data-n="${x}" aria-pressed="${S.count===x}">${x===n?"الكل ("+ar(n)+")":ar(x)}</button>`).join("")};
-  drawChips();
-  $("tp").onclick=e=>{const b=e.target.closest(".topic");if(!b)return;S.cat=b.dataset.c;
-    document.querySelectorAll(".topic").forEach(x=>x.setAttribute("aria-pressed",x===b));drawChips()};
-  $("ch").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;S.count=+b.dataset.n;
-    document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b))};
+  </div>
+  <div class="card fade"><h2 class="sec">نتائج المختبرين</h2>
+    <div class="tools"><label>الترتيب<select id="bs"><option value="pct">الأعلى درجة أولًا</option><option value="new">الأحدث أولًا</option><option value="name">الاسم</option></select></label>
+    <label>الباب<select id="bt"></select></label></div>
+    <div class="tw"><table><thead><tr><th>#</th><th>الاسم</th><th>الباب</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th></tr></thead><tbody id="bb"></tbody></table></div>
+    <div class="hint">اضغط على أي اسم لرؤية إجاباته.</div></div>`;
+  const paint=()=>{document.querySelectorAll(".topic").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c==="all"?S.sel.size===CATS.length:S.sel.has(b.dataset.c)))};
+  const hintMax=()=>{const m=poolSize();$("e3").style.color="var(--ink)";$("e3").textContent=`أكبر عدد متاح للأبواب المختارة: ${ar(m)}`;
+    const o=[10,20,30].filter(x=>x<m);o.push(m);$("ch").innerHTML=o.map(x=>`<button type="button" class="chip" data-n="${x}" aria-pressed="${toEn($("cn").value)==x}">${x===m?"الكل ("+ar(m)+")":ar(x)}</button>`).join("")};
+  paint();hintMax();
+  $("tp").onclick=e=>{const b=e.target.closest(".topic");if(!b)return;const c=b.dataset.c;$("e2").textContent="";
+    if(c==="all"){S.sel=new Set(CATS.map(x=>x.id))}
+    else if(S.sel.has(c)){if(S.sel.size===1){$("e2").textContent="يجب اختيار باب واحد على الأقل.";snd("err");return}S.sel.delete(c)}
+    else S.sel.add(c);
+    paint();hintMax()};
+  $("ch").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$("cn").value=b.dataset.n;S.cnt=b.dataset.n;hintMax()};
+  $("cn").oninput=e=>{const v=toEn(e.target.value).replace(/\D/g,"");e.target.value=v;S.cnt=v;hintMax();
+    if(v&&+v>poolSize()){$("e3").style.color="var(--red)";$("e3").textContent=`لا يمكن تجاوز العدد المتاح، أكبر رقم هو ${ar(poolSize())}`}};
   $("nm").oninput=e=>{S.name=e.target.value;$("e1").textContent=""};
   $("nm").onkeydown=e=>{if(e.key==="Enter")startQuiz()};
   $("go").onclick=startQuiz;
+  const topics=[...new Set(loadLog().map(r=>r.cat))];
+  $("bt").innerHTML=`<option value="*">كل الأبواب</option>`+topics.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  $("bs").onchange=$("bt").onchange=()=>drawTable("bb",$("bs").value,$("bt").value,false);
+  drawTable("bb","pct","*",false);
 }
 function startQuiz(){
   S.name=($("nm")?$("nm").value:S.name).trim().replace(/\s+/g," ");
-  if(!S.name){$("e1").textContent="فضلًا اكتب اسمك قبل بدء الاختبار.";$("nm").focus();return}
-  const pool=shuffle(poolFor(S.cat)).slice(0,S.count);
-  S.qs=pool.map(q=>{const all=shuffle([q.a,q.b,q.c].map((t,k)=>({t,ok:k===0})));
-    return {id:q.id,q:q.q,cat:q.cat,ref:q.ref,opts:all,ch:null}});
-  S.i=0;S.saved=false;renderQ();window.scrollTo({top:0,behavior:"smooth"});
+  if(!S.name){$("e1").textContent="فضلًا اكتب اسمك قبل بدء الاختبار.";snd("err");$("nm").focus();return}
+  const m=poolSize(),n=parseInt(toEn($("cn").value),10);
+  if(!(n>=1)){$("e3").style.color="var(--red)";$("e3").textContent="اكتب عدد الأسئلة (رقمًا من ١ إلى "+ar(m)+")";snd("err");$("cn").focus();return}
+  if(n>m){$("e3").style.color="var(--red)";$("e3").textContent=`لا يمكن تجاوز العدد المتاح، أكبر رقم هو ${ar(m)}`;snd("err");$("cn").focus();return}
+  S.cnt=String(n);build(n);snd("start");renderQ();window.scrollTo({top:0,behavior:"smooth"});
 }
+
+/* quiz */
 function renderQ(){
   const q=S.qs[S.i],n=S.qs.length,last=S.i===n-1;
   const answered=S.qs.filter(x=>x.ch!==null).length;
@@ -232,107 +307,119 @@ function renderQ(){
     <div class="opts" role="radiogroup">${q.opts.map((o,k)=>`<button type="button" class="opt" role="radio" aria-checked="${q.ch===k}" data-k="${k}"><span class="lt">${LET[k]}</span><span>${esc(o.t)}</span></button>`).join("")}</div>
     <div class="nav"><button class="btn" id="pv" type="button" ${S.i===0?"disabled":""}>السابق</button>
     <button class="btn pri" id="nx" type="button" ${q.ch===null?"disabled":""}>${last?"إنهاء وعرض النتيجة":"التالي"}</button></div>
-    <div class="hint" style="text-align:center;margin-top:10px">أجبت عن ${ar(answered)} من ${ar(n)}</div>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><span class="hint">أجبت عن ${ar(answered)} من ${ar(n)}</span>
+    <button class="btn fin" id="fin" type="button" style="padding:4px 18px">إنهاء الاختبار الآن</button></div>
   </div>`;
   document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{q.ch=+b.dataset.k;renderQ()});
   $("pv").onclick=()=>{S.i--;renderQ()};
-  $("nx").onclick=()=>{if(q.ch===null)return;if(last)finish();else{S.i++;renderQ();window.scrollTo({top:0,behavior:"smooth"})}};
+  $("nx").onclick=()=>{if(q.ch===null)return;if(last){finish()}else{snd("next");S.i++;renderQ();window.scrollTo({top:0,behavior:"smooth"})}};
+  $("fin").onclick=()=>{const b=$("fin");if(!b.classList.contains("arm")){b.classList.add("arm");const un=n-answered;b.textContent=un?`تأكيد الإنهاء (${ar(un)} بلا إجابة)`:"تأكيد الإنهاء";setTimeout(()=>{if(b.isConnected){b.classList.remove("arm");b.textContent="إنهاء الاختبار الآن"}},4000);return}
+    finish()};
 }
 function finish(){
-  const n=S.qs.length,c=S.qs.filter(q=>q.opts[q.ch].ok).length,pct=Math.round(c/n*100);
-  const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:S.name,cat:catName(S.cat),n,c,pct,ts:Date.now()};
-  const log=loadLog();log.push(rec);saveLog(log);S.saved=true;S.rec=rec;
-  renderResult("wrong");toast("حُفظت نتيجتك في سجل المجيبين");
-  window.scrollTo({top:0,behavior:"smooth"});
+  const n=S.qs.length,c=S.qs.filter(isOk).length,pct=Math.round(c/n*100);
+  const det=S.qs.map(q=>({q:q.q,u:q.ch===null?null:q.opts[q.ch].t,a:q.opts.find(o=>o.ok).t,r:q.ref}));
+  const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:S.name,cat:selLabel(),n,c,pct,ts:Date.now(),det};
+  const log=loadLog();log.push(rec);saveLog(log);
+  snd(pct>=75?"win":pct>=50?"ok":"low");
+  renderResult("wrong");toast("حُفظت نتيجتك في سجل المجيبين");window.scrollTo({top:0,behavior:"smooth"});
 }
+function rvHtml(list){
+  return list.length?list.map(x=>{const ok=x.u===x.a;
+    return `<div class="rv ${ok?"ok":""}"><div class="rq">${esc(x.q)}</div>
+    ${ok?"":x.u===null?`<div class="ans skip"><b>لم تُجب عن هذا السؤال</b></div>`:`<div class="ans bad"><b>الإجابة:</b>${esc(x.u)}</div>`}
+    <div class="ans good"><b>${ok?"الإجابة الصحيحة:":"الصواب:"}</b>${esc(x.a)}</div>
+    <div class="ref">المرجع: ${esc(x.r)}</div></div>`}).join(""):`<div class="empty">أحسنت! لم تخطئ في أي سؤال.</div>`}
 function renderResult(tab){
-  const n=S.qs.length,c=S.qs.filter(q=>q.opts[q.ch].ok).length,pct=Math.round(c/n*100),bad=n-c;
+  const n=S.qs.length,c=S.qs.filter(isOk).length,pct=Math.round(c/n*100),bad=n-c,un=S.qs.filter(q=>q.ch===null).length;
   const tier=pct>=90?["ممتاز! بارك الله فيك","تحصيل رائع، واصل على هذا المستوى."]:pct>=75?["جيد جدًا","أنت قريب من الإتقان، راجع ما أخطأت فيه."]:pct>=50?["جيد","أساس طيب، وتحتاج إلى مراجعة الأخطاء أدناه."]:["تحتاج إلى مزيد من المراجعة","لا بأس، اقرأ الأخطاء وأعد المحاولة."];
   const col=pct>=75?"var(--green)":pct>=50?"var(--gold)":"var(--red)";
   const R=84,C=2*Math.PI*R;
-  const list=S.qs.filter(q=>tab==="all"||!q.opts[q.ch].ok);
+  const det=S.qs.map(q=>({q:q.q,u:q.ch===null?null:q.opts[q.ch].t,a:q.opts.find(o=>o.ok).t,r:q.ref}));
+  const list=det.filter(x=>tab==="all"||x.u!==x.a);
   app.innerHTML=`<div class="card res fade">
-    <p>${esc(S.name)}، نتيجتك في «${esc(catName(S.cat))}»</p>
+    <p>${esc(S.name)}، نتيجتك في «${esc(selLabel())}»</p>
     <div class="ring"><svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="${R}" fill="none" stroke-width="16"/><circle class="fg" id="fg" cx="100" cy="100" r="${R}" fill="none" stroke="${col}" stroke-width="16" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
     <div class="num">${ar(c)} / ${ar(n)}<small>${ar(pct)}٪</small></div></div>
-    <h2>${tier[0]}</h2><p>${tier[1]}</p>
+    <h2>${tier[0]}</h2><p>${tier[1]}${un?` (لم تُجب عن ${ar(un)} سؤالًا)`:""}</p>
     <div class="acts"><button class="btn pri" id="again" type="button">إعادة الاختبار</button><button class="btn" id="newt" type="button">اختبار جديد</button></div>
   </div>
   <div class="card fade">
     <h2 class="sec">مراجعة الإجابات</h2>
     <div class="tabs"><button class="chip" data-t="wrong" aria-pressed="${tab==="wrong"}">الأخطاء (${ar(bad)})</button><button class="chip" data-t="all" aria-pressed="${tab==="all"}">كل الأسئلة (${ar(n)})</button></div>
-    ${list.length?list.map(q=>{const ok=q.opts[q.ch].ok,good=q.opts.find(o=>o.ok);
-      return `<div class="rv ${ok?"ok":""}"><div class="rq">${esc(q.q)}</div>
-      ${ok?"":`<div class="ans bad"><b>إجابتك:</b>${esc(q.opts[q.ch].t)}</div>`}
-      <div class="ans good"><b>${ok?"إجابتك الصحيحة:":"الصواب:"}</b>${esc(good.t)}</div>
-      <div class="ref">المرجع: ${esc(q.ref)}</div></div>`}).join(""):`<div class="empty">أحسنت! لم تخطئ في أي سؤال.</div>`}
+    ${rvHtml(list)}
   </div>`;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const f=$("fg");if(f)f.style.strokeDashoffset=C*(1-pct/100)}));
-  $("again").onclick=()=>{startQuizAgain()};
+  $("again").onclick=()=>{build(Math.min(n,poolSize()));snd("start");renderQ();window.scrollTo({top:0,behavior:"smooth"})};
   $("newt").onclick=()=>{renderStart();window.scrollTo({top:0})};
-  document.querySelectorAll(".tabs .chip").forEach(b=>b.onclick=()=>{renderResult(b.dataset.t)});
+  document.querySelectorAll(".tabs .chip").forEach(b=>b.onclick=()=>renderResult(b.dataset.t));
 }
-function startQuizAgain(){
-  const pool=shuffle(poolFor(S.cat)).slice(0,S.count);
-  S.qs=pool.map(q=>{const all=shuffle([q.a,q.b,q.c].map((t,k)=>({t,ok:k===0})));return {id:q.id,q:q.q,cat:q.cat,ref:q.ref,opts:all,ch:null}});
-  S.i=0;renderQ();window.scrollTo({top:0,behavior:"smooth"});
-}
-/* log */
-function sorted(){
-  const f=$("topicSel").value,s=$("sortSel").value;
+
+/* results table (public + admin) */
+function sortedBy(s,f){
   let a=loadLog().filter(r=>f==="*"||r.cat===f);
   const cmp={pct:(x,y)=>y.pct-x.pct||y.c-x.c||x.ts-y.ts,pctasc:(x,y)=>x.pct-y.pct||x.ts-y.ts,new:(x,y)=>y.ts-x.ts,old:(x,y)=>x.ts-y.ts,
     name:(x,y)=>x.name.localeCompare(y.name,"ar")||y.pct-x.pct,topic:(x,y)=>x.cat.localeCompare(y.cat,"ar")||y.pct-x.pct}[s];
   return a.sort(cmp);
 }
 const fmt=ts=>new Date(ts).toLocaleString("ar-u-ca-gregory-nu-arab",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+function drawTable(tb,s,f,admin){
+  const a=sortedBy(s,f),cols=admin?7:6;
+  $(tb).innerHTML=a.length?a.map((r,k)=>`<tr class="${r.det?"clk":""}" data-id="${r.id}"><td>${ar(k+1)}</td><td>${esc(r.name)}</td><td>${esc(r.cat)}</td><td class="sc">${ar(r.c)} / ${ar(r.n)}</td><td><span class="pc ${r.pct>=75?"h":r.pct>=50?"m":"l"}">${ar(r.pct)}٪</span></td><td>${fmt(r.ts)}</td>${admin?`<td><button class="del" data-id="${r.id}" title="حذف" type="button">×</button></td>`:""}</tr>`).join(""):`<tr><td colspan="${cols}" class="empty">لا توجد نتائج محفوظة بعد.</td></tr>`;
+  return a;
+}
+document.addEventListener("click",e=>{if(e.target.closest(".del"))return;const tr=e.target.closest("tr.clk");if(!tr)return;
+  const r=loadLog().find(x=>x.id===tr.dataset.id);if(!r||!r.det)return;
+  $("dvt").textContent=`إجابات ${r.name} (${r.c} من ${r.n})`.replace(/\d+/g,ar);
+  $("dvb").innerHTML=`<div class="hint" style="margin-bottom:10px">${esc(r.cat)} • ${fmt(r.ts)}</div>`+rvHtml(r.det);
+  $("dv").classList.add("on");snd("open")});
+$("dvx").onclick=()=>$("dv").classList.remove("on");
+$("dv").onclick=e=>{if(e.target===$("dv"))$("dv").classList.remove("on")};
+
+/* admin */
 function drawLog(){
   const all=loadLog(),cur=$("topicSel").value||"*";
   const names=[...new Set(all.map(r=>r.cat))];
   $("topicSel").innerHTML=`<option value="*">كل الأبواب</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
   $("topicSel").value=names.includes(cur)?cur:"*";
-  const a=sorted();
-  $("logBody").innerHTML=a.length?a.map((r,k)=>`<tr><td>${ar(k+1)}</td><td>${esc(r.name)}</td><td>${esc(r.cat)}</td><td class="sc">${ar(r.c)} / ${ar(r.n)}</td><td><span class="pc ${r.pct>=75?"h":r.pct>=50?"m":"l"}">${ar(r.pct)}٪</span></td><td>${fmt(r.ts)}</td><td><button class="del" data-id="${r.id}" title="حذف" type="button">×</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">لا توجد نتائج محفوظة بعد.</td></tr>`;
-  $("cnt").textContent=a.length?`${ar(a.length)} نتيجة`:"";
-  $("exp").disabled=!a.length;
+  const a=drawTable("logBody",$("sortSel").value,$("topicSel").value,true);
+  $("cnt").textContent=a.length?`${ar(a.length)} نتيجة`:"";$("exp").disabled=!a.length;
 }
 function openLog(){$("ov").classList.add("on");$("clr").classList.remove("arm");$("clr").textContent="مسح السجل";drawLog()}
-function closeLog(){$("ov").classList.remove("on")}
+function closeLog(){$("ov").classList.remove("on");if(document.getElementById("bb"))renderStart()}
 function csvCell(v){v=String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
 function exportCsv(){
-  const a=sorted();if(!a.length)return;
+  const a=sortedBy($("sortSel").value,$("topicSel").value);if(!a.length)return;
   const rows=[["الترتيب","الاسم","الباب","عدد الأسئلة","الإجابات الصحيحة","النسبة المئوية","التاريخ","الوقت"]];
   a.forEach((r,k)=>{const d=new Date(r.ts),p=x=>String(x).padStart(2,"0");
     rows.push([k+1,r.name,r.cat,r.n,r.c,r.pct+"%",`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`,`${p(d.getHours())}:${p(d.getMinutes())}`])});
-  const txt="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
+  const txt="\ufeff"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
   const url=URL.createObjectURL(new Blob([txt],{type:"text/csv;charset=utf-8"}));
   const l=document.createElement("a");l.href=url;l.download="نتائج_اختبار_الفقه.csv";document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   toast("تم تصدير الملف");
 }
 $("closeLog").onclick=closeLog;
 $("ov").onclick=e=>{if(e.target===$("ov"))closeLog()};
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLog()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("dv").classList.contains("on"))$("dv").classList.remove("on");else if($("ov").classList.contains("on"))closeLog()}});
 $("sortSel").onchange=drawLog;$("topicSel").onchange=drawLog;$("exp").onclick=exportCsv;
 $("logBody").onclick=e=>{const b=e.target.closest(".del");if(!b)return;saveLog(loadLog().filter(r=>r.id!==b.dataset.id));drawLog()};
 $("clr").onclick=()=>{const b=$("clr");if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="اضغط مرة أخرى للتأكيد";setTimeout(()=>{b.classList.remove("arm");b.textContent="مسح السجل"},3500);return}
   saveLog([]);b.classList.remove("arm");b.textContent="مسح السجل";drawLog();toast("تم مسح السجل")};
-
-/* admin */
-const PH="19968a8e4db4bf9ce017433b2a2b32d7f97b73a704c341bcdc16f2c2ba22e987";
 async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("fq|"+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 let taps=[];
 $("dot").onclick=()=>{const t=Date.now();taps=taps.filter(x=>t-x<2000);taps.push(t);if(taps.length>=3){taps=[];$("pwi").value="";$("pwe").textContent="";$("pw").classList.add("on");setTimeout(()=>$("pwi").focus(),50)}};
 $("pwx").onclick=()=>$("pw").classList.remove("on");
 async function tryPw(){let ok=false;try{ok=(await sha($("pwi").value.trim()))===PH}catch(e){ok=$("pwi").value.trim()==="4321"}
-  if(ok){$("pw").classList.remove("on");$("ac").innerHTML=`<option>كل الأبواب</option>`+CATS.map(c=>`<option>${esc(c.name)}</option>`).join("");openLog()}else{$("pwe").textContent="كلمة المرور غير صحيحة."}}
+  if(ok){$("pw").classList.remove("on");$("ac").innerHTML=`<option>كل الأبواب</option>`+CATS.map(c=>`<option>${esc(c.name)}</option>`).join("");snd("open");openLog()}else{$("pwe").textContent="كلمة المرور غير صحيحة.";snd("err")}}
 $("pwok").onclick=tryPw;$("pwi").onkeydown=e=>{if(e.key==="Enter")tryPw()};
-const toEn=s=>String(s).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));
 $("aadd").onclick=()=>{const nm=$("an").value.trim().replace(/\s+/g," "),c=parseInt(toEn($("ar1").value),10),n=parseInt(toEn($("ar2").value),10);
-  if(!nm||!(n>0)||!(c>=0)||c>n){toast("تحقق من الاسم والدرجة");return}
+  if(!nm||!(n>0)||!(c>=0)||c>n){toast("تحقق من الاسم والدرجة");snd("err");return}
   const l=loadLog();l.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:nm,cat:$("ac").value,n,c,pct:Math.round(c/n*100),ts:Date.now()});saveLog(l);
   $("an").value="";$("ar1").value="";drawLog();toast("تمت الإضافة")};
 renderStart();
-if(location.hash==='#test'){document.getElementById('nm').value='اختبار';S.name='اختبار';S.cat='siyam';S.count=10;startQuiz();S.qs.forEach((q,i)=>q.ch=i%3);S.i=S.qs.length-1;finish();document.title='OK '+S.qs.filter(q=>q.opts[q.ch].ok).length+' '+loadLog().length;}
+if(location.hash==='#test'){S.sel=new Set(['siyam','jihad']);S.cnt='10';document.getElementById('nm').value='اختبار';startQuiz();const cs=S.qs.map(q=>q.cat);S.qs.forEach((q,i)=>{if(i<6)q.ch=i%3});finish();document.title='OK cats='+new Set(cs).size+' c='+cs.filter(x=>x==='siyam').length+' n='+S.qs.length+' log='+loadLog().length+' un='+S.qs.filter(q=>q.ch===null).length;}
+if(location.hash==='#val'){S.sel=new Set(['siyam']);document.getElementById('nm').value='س';document.getElementById('cn').value='99';startQuiz();document.title='VAL '+document.getElementById('e3').textContent+' | '+(S.qs.length);}
+if(location.hash==='#all'){S.sel=new Set(CATS.map(c=>c.id));S.name='x';S.cnt='20';build(20);document.title='ALL '+JSON.stringify(S.qs.reduce((m,q)=>(m[q.cat]=(m[q.cat]||0)+1,m),{}));}
 </script>
 </body>
 </html>
